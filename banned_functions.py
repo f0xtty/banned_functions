@@ -3,6 +3,9 @@ Author: Stephen Sims - @Steph3nSims
 Topic: IDAPython scripting - SANS SEC760 - http://www.sans.org/sec760
 Tested with IDA 6.7
 
+Modify: f0xtty
+Tested with IDA 8.3
+
 Style Improvements by: Tim Medin (B33f Supreme)
 
 Script to check an PE/COFF or ELF input file to see if it
@@ -66,56 +69,56 @@ def iatCallback(addr, name, ord):   # Don't care about ord, but required for enu
     if name in bannedList and name not in checked:
         checked.append(name)
         loopflag = 0
-        xref = XrefsTo(addr, 0)
+        xref = idautils.XrefsTo(addr, 0)
         for checkXrefType in xref:
-            if XrefTypeName(checkXrefType.type) == "Code_Near_Call" and loopflag != 1:
+            if idautils.XrefTypeName(checkXrefType.type) == "Code_Near_Call" and loopflag != 1:
                 print("\nFound function %s in IAT at 0x%08x" % (name, addr))
                 print("*** calls to %s ***" % name)
                 loopflag = 1
                 codeflag = 1
-                xref = CodeRefsTo(addr, 1)      # Ref to IAT should be of type code.
+                xref = idautils.CodeRefsTo(addr, 1)      # Ref to IAT should be of type code.
                 for lines in xref:
-                    if check_bpt(lines) > 0:     # Adding or deleting BP's
+                    if idc.check_bpt(lines) > 0:     # Adding or deleting BP's
                         idaapi.del_bpt(lines)
                         print("=> 0x%08x - Deleted BP" % lines)
                     else:
-                        idaapi.add_bpt(lines, 0, BPT_SOFT)
-                        enable_bpt(lines, True)
+                        idaapi.add_bpt(lines, 0, idc.BPT_SOFT)
+                        idc.enable_bpt(lines, True)
                         checked.append(lines)
                         print("=> 0x%08x - Added BP" % lines)
                         bpflag = 1
-            elif XrefTypeName(checkXrefType.type) == "Data_Read" and codeflag == 0:
+            elif idautils.XrefTypeName(checkXrefType.type) == "Data_Read" and codeflag == 0:
                 print("\nFound function %s in IAT at 0x%08x" % (name, addr))
                 print("*** calls to %s ***" % name)
-                xref = DataRefsTo(addr)                # Ref to IAT should be of type data.
+                xref = idautils.DataRefsTo(addr)                # Ref to IAT should be of type data.
                 for line in xref:
-                    xref2 = CodeRefsTo(line, 1)
+                    xref2 = idautils.CodeRefsTo(line, 1)
                     for lines in xref2:
-                        if check_bpt(lines) > 0:         # Adding or deleting BP's
+                        if idc.check_bpt(lines) > 0:         # Adding or deleting BP's
                             idaapi.del_bpt(lines)
                             print("=> 0x%08x - Deleted BP" % lines)
                         else:
-                            idaapi.add_bpt(lines, 0, BPT_SOFT)
-                            enable_bpt(lines, True)
+                            idaapi.add_bpt(lines, 0, idc.BPT_SOFT)
+                            idc.enable_bpt(lines, True)
                             checked.append(lines)
                             print("=> 0x%08x - Added BP" % lines)
                             bpflag = 1
-            elif XrefTypeName(checkXrefType.type) == "Code_Near_Jump":
-                GOT = DataRefsTo(addr)
+            elif idautils.XrefTypeName(checkXrefType.type) == "Code_Near_Jump":
+                GOT = idautils.DataRefsTo(addr)
                 for line in GOT:
                     print("\n Found function %s in GOT at 0x%08x" % (name, line))
                     print("*** calls to %s ***" % name)
                     codeflag = 2
-                xref = CodeRefsTo(addr, 1)
+                xref = idautils.CodeRefsTo(addr, 1)
                 for line in xref:
-                    xref2 = CodeRefsTo(line, 1)
+                    xref2 = idautils.CodeRefsTo(line, 1)
                     for lines in xref2:
-                        if check_bpt(lines) > 0:
+                        if idc.check_bpt(lines) > 0:
                             idaapi.del_bpt(lines)
                             print("=> 0x%08x - Deleted BP" % lines)
                         else:
-                            idaapi.add_bpt(lines, 0, BPT_SOFT)
-                            enable_bpt(lines, True)
+                            idaapi.add_bpt(lines, 0, idc.BPT_SOFT)
+                            idc.enable_bpt(lines, True)
                             checked.append(lines)
                             print("=> 0x%08x = Added BP" % lines)
                             bpflag = 1							
@@ -161,6 +164,4 @@ def ToggleBreakpoints():
     else:
         print("\n")
 
-if __name__ == '__main__':
-    ToggleBreakpoints()
-
+ToggleBreakpoints()
